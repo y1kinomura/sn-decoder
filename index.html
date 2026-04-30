@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>シリアル番号逆引きツール</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Meiryo', 'Hiragino Sans', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      width: 100%;
+      max-width: 480px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: #1a3a5c;
+      color: #fff;
+      padding: 24px 28px;
+    }
+    .card-header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .card-header p {
+      font-size: 0.8rem;
+      margin-top: 6px;
+      opacity: 0.75;
+    }
+    .card-body { padding: 28px; }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .input-group input {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 1.5rem;
+      letter-spacing: 0.15em;
+      border: 2px solid #d0d7de;
+      border-radius: 8px;
+      outline: none;
+      font-family: monospace;
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus { border-color: #1a3a5c; }
+    .input-group input.error { border-color: #e53e3e; }
+    .input-group button {
+      padding: 12px 20px;
+      background: #1a3a5c;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .input-group button:hover { background: #254f7a; }
+    .error-msg {
+      color: #e53e3e;
+      font-size: 0.85rem;
+      margin-top: -16px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .result { display: none; }
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .result-item {
+      background: #f7f9fc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .result-item.full { grid-column: 1 / -1; }
+    .result-item .label {
+      font-size: 0.72rem;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .result-item .value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1a3a5c;
+    }
+    .result-item .value.site { font-size: 1.1rem; }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .badge-japan  { background: #bee3f8; color: #2b6cb0; }
+    .badge-china  { background: #c6f6d5; color: #276749; }
+    .badge-vietnam{ background: #fefcbf; color: #744210; }
+    .badge-future { background: #e2e8f0; color: #4a5568; }
+    .sn-display {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #1a3a5c;
+      margin-bottom: 4px;
+      font-family: monospace;
+    }
+    .sn-parts {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 20px;
+    }
+    .sn-part {
+      padding: 2px 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .sn-part.p1 { color: #2b6cb0; border-bottom: 3px solid #2b6cb0; }
+    .sn-part.p2 { color: #276749; border-bottom: 3px solid #276749; }
+    .sn-part.p3 { color: #4a5568; border-bottom: 3px solid #718096; }
+    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+    .hint {
+      font-size: 0.78rem;
+      color: #a0aec0;
+      text-align: center;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <h1>シリアル番号逆引きツール</h1>
+    <p>7桁のS/Nを入力すると製造情報を表示します</p>
+  </div>
+  <div class="card-body">
+    <div class="input-group">
+      <input type="text" id="snInput" maxlength="7" placeholder="例: 3153001"
+             inputmode="numeric" autocomplete="off">
+      <button onclick="decode()">解析</button>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="result" id="result">
+      <div class="sn-display" id="snDisplay"></div>
+      <div class="sn-parts">
+        <div class="sn-part p1" id="part1Label"></div>
+        <div class="sn-part p2" id="part2Label"></div>
+        <div class="sn-part p3" id="part3Label"></div>
+      </div>
+      <hr class="divider">
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="label">製造年</div>
+          <div class="value" id="resYear">—</div>
+        </div>
+        <div class="result-item">
+          <div class="label">製造月</div>
+          <div class="value" id="resMonth">—</div>
+        </div>
+        <div class="result-item full">
+          <div class="label">製造拠点</div>
+          <div class="value site" id="resSite">—</div>
+          <div id="resBadge"></div>
+        </div>
+        <div class="result-item full">
+          <div class="label">月次連番</div>
+          <div class="value" id="resSeq">—</div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">Enterキーでも解析できます</p>
+  </div>
+</div>
+
+<script>
+const SITES = {
+  '1': { name: '揖斐工場（日本）',   badge: 'badge-japan'   },
+  '2': { name: '昆山工場（中国）',   badge: 'badge-china'   },
+  '3': { name: 'ベトナム工場',       badge: 'badge-vietnam' },
+  '4': { name: '将来拠点 (4)',       badge: 'badge-future'  },
+  '5': { name: '将来拠点 (5)',       badge: 'badge-future'  },
+};
+
+function decode() {
+  const sn = document.getElementById('snInput').value.trim();
+  const input = document.getElementById('snInput');
+  const errorMsg = document.getElementById('errorMsg');
+  const result = document.getElementById('result');
+
+  errorMsg.style.display = 'none';
+  input.classList.remove('error');
+  result.style.display = 'none';
+
+  if (!/^\d{7}$/.test(sn)) {
+    errorMsg.textContent = '7桁の数字を入力してください';
+    errorMsg.style.display = 'block';
+    input.classList.add('error');
+    return;
+  }
+
+  const code = parseInt(sn.substring(0, 3), 10);
+  const siteCode = sn[3];
+  const seq = sn.substring(4);
+
+  let year, month;
+  const remainder = code % 12;
+  if (remainder === 0) {
+    year = 2000 + Math.floor(code / 12) - 1;
+    month = 12;
+  } else {
+    year = 2000 + Math.floor(code / 12);
+    month = remainder;
+  }
+
+  const site = SITES[siteCode] || { name: `不明（コード: ${siteCode}）`, badge: 'badge-future' };
+
+  // Display
+  document.getElementById('snDisplay').textContent = sn;
+  document.getElementById('part1Label').textContent = `${sn.substring(0,3)} 換算年月`;
+  document.getElementById('part2Label').textContent = `${sn[3]} 拠点`;
+  document.getElementById('part3Label').textContent = `${sn.substring(4)} 連番`;
+
+  document.getElementById('resYear').textContent  = `${year}年`;
+  document.getElementById('resMonth').textContent = `${month}月`;
+  document.getElementById('resSite').textContent  = site.name;
+  document.getElementById('resBadge').innerHTML   =
+    `<span class="badge ${site.badge}">${siteCode}番拠点</span>`;
+  document.getElementById('resSeq').textContent   = `${parseInt(seq, 10)} 台目`;
+
+  result.style.display = 'block';
+}
+
+document.getElementById('snInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') decode();
+});
+</script>
+</body>
+</html>
