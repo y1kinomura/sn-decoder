@@ -19,7 +19,9 @@
 <script>
 function launch() {
   window.open('./index.html', '_blank');
-  setTimeout(function() { history.back(); }, 100);
+  setTimeout(function() {
+    window.location.href = 'https://hashima.cybozu.com/o/ag.cgi?page=AGIndex';
+  }, 100);
 }
 </script>
 </body>
