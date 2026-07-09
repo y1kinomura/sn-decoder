@@ -1,0 +1,28 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>シリアル番号逆引きツール</title>
+  <style>
+    body { font-family: Meiryo, sans-serif; background: #1a3a5c; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    .box { background: #fff; border-radius: 12px; padding: 40px 48px; text-align: center; max-width: 380px; }
+    h1 { color: #1a3a5c; font-size: 1.1rem; margin-bottom: 12px; }
+    p { color: #718096; font-size: 0.88rem; margin-bottom: 24px; }
+    a { display: inline-block; padding: 12px 32px; background: #1a3a5c; color: #fff; border-radius: 8px; text-decoration: none; font-size: 1rem; }
+    a:hover { background: #254f7a; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h1>シリアル番号逆引きツール</h1>
+  <p id="msg">新しいタブで開いています...</p>
+  <a href="./index.html" target="_blank" id="btn">開かない場合はここをクリック</a>
+</div>
+<script>
+  var w = window.open('./index.html', '_blank');
+  if (!w) {
+    document.getElementById('msg').textContent = 'ポップアップがブロックされました。下のボタンをクリックしてください。';
+  }
+</script>
+</body>
+</html>
