@@ -20,7 +20,7 @@
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.12);
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       overflow: hidden;
     }
     .card-header {
@@ -28,123 +28,89 @@
       color: #fff;
       padding: 24px 28px;
     }
-    .card-header h1 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-    }
-    .card-header p {
-      font-size: 0.8rem;
-      margin-top: 6px;
-      opacity: 0.75;
-    }
+    .card-header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.03em; }
+    .card-header p  { font-size: 0.8rem; margin-top: 6px; opacity: 0.75; }
     .card-body { padding: 28px; }
-    .input-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
-    }
+    .input-group { display: flex; gap: 10px; margin-bottom: 24px; }
     .input-group input {
-      flex: 1;
-      padding: 12px 16px;
-      font-size: 1.5rem;
-      letter-spacing: 0.15em;
-      border: 2px solid #d0d7de;
-      border-radius: 8px;
-      outline: none;
-      font-family: monospace;
-      transition: border-color 0.2s;
+      flex: 1; padding: 12px 16px; font-size: 1.5rem; letter-spacing: 0.15em;
+      border: 2px solid #d0d7de; border-radius: 8px; outline: none;
+      font-family: monospace; transition: border-color 0.2s;
     }
     .input-group input:focus { border-color: #1a3a5c; }
     .input-group input.error { border-color: #e53e3e; }
     .input-group button {
-      padding: 12px 20px;
-      background: #1a3a5c;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
-      white-space: nowrap;
+      padding: 12px 20px; background: #1a3a5c; color: #fff;
+      border: none; border-radius: 8px; font-size: 1rem;
+      cursor: pointer; transition: background 0.2s; white-space: nowrap;
     }
     .input-group button:hover { background: #254f7a; }
-    .error-msg {
-      color: #e53e3e;
-      font-size: 0.85rem;
-      margin-top: -16px;
-      margin-bottom: 16px;
-      display: none;
-    }
+    .error-msg { color: #e53e3e; font-size: 0.85rem; margin-top: -16px; margin-bottom: 16px; display: none; }
     .result { display: none; }
-    .result-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+
+    .alert-model-change {
+      background: #fff3cd; border: 2px solid #f59e0b;
+      border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
+      display: flex; align-items: flex-start; gap: 10px;
     }
-    .result-item {
-      background: #f7f9fc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 16px;
-    }
-    .result-item.full { grid-column: 1 / -1; }
-    .result-item .label {
-      font-size: 0.72rem;
-      color: #718096;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 6px;
-    }
-    .result-item .value {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #1a3a5c;
-    }
-    .result-item .value.site { font-size: 1.1rem; }
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin-top: 4px;
-    }
-    .badge-japan  { background: #bee3f8; color: #2b6cb0; }
-    .badge-china  { background: #c6f6d5; color: #276749; }
-    .badge-vietnam{ background: #fefcbf; color: #744210; }
-    .badge-future { background: #e2e8f0; color: #4a5568; }
+    .alert-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .alert-title { font-weight: 700; color: #b45309; font-size: 0.95rem; margin-bottom: 2px; }
+    .alert-sub { font-size: 0.8rem; color: #78350f; }
+
     .sn-display {
-      text-align: center;
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      color: #1a3a5c;
-      margin-bottom: 4px;
-      font-family: monospace;
+      text-align: center; font-size: 2rem; font-weight: 700;
+      letter-spacing: 0.2em; color: #1a3a5c; margin-bottom: 4px; font-family: monospace;
     }
-    .sn-parts {
-      display: flex;
-      justify-content: center;
-      gap: 0;
-      margin-bottom: 20px;
-    }
-    .sn-part {
-      padding: 2px 6px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      text-align: center;
-    }
+    .sn-parts { display: flex; justify-content: center; margin-bottom: 20px; }
+    .sn-part { padding: 2px 6px; font-size: 0.72rem; font-weight: 600; text-align: center; }
     .sn-part.p1 { color: #2b6cb0; border-bottom: 3px solid #2b6cb0; }
     .sn-part.p2 { color: #276749; border-bottom: 3px solid #276749; }
     .sn-part.p3 { color: #4a5568; border-bottom: 3px solid #718096; }
-    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
-    .hint {
-      font-size: 0.78rem;
-      color: #a0aec0;
-      text-align: center;
-      margin-top: 16px;
+    .sn-part.p3.change { color: #b45309; border-bottom: 3px solid #f59e0b; }
+
+    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 16px 0; }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .result-item {
+      background: #f7f9fc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;
     }
+    .result-item.full { grid-column: 1 / -1; }
+    .result-item .label { font-size: 0.72rem; color: #718096; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .result-item .value { font-size: 1.35rem; font-weight: 700; color: #1a3a5c; }
+    .result-item .value.site { font-size: 1.05rem; }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600; margin-top: 4px;
+    }
+    .badge-japan   { background: #bee3f8; color: #2b6cb0; }
+    .badge-china   { background: #c6f6d5; color: #276749; }
+    .badge-vietnam { background: #fefcbf; color: #744210; }
+    .badge-future  { background: #e2e8f0; color: #4a5568; }
+    .badge-change  { background: #fde68a; color: #92400e; }
+
+    .history-section { margin-top: 4px; }
+    .history-title {
+      font-size: 0.8rem; font-weight: 700; color: #b45309;
+      letter-spacing: 0.06em; margin-bottom: 10px;
+    }
+    .history-chain { display: flex; flex-direction: column; gap: 4px; }
+    .history-entry {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 8px; padding: 12px 14px; position: relative;
+    }
+    .history-arrow {
+      text-align: center; color: #f59e0b; font-weight: 700; font-size: 1rem; margin: 2px 0;
+    }
+    .history-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .history-col { flex: 1; min-width: 110px; }
+    .h-label { font-size: 0.68rem; color: #92400e; margin-bottom: 2px; }
+    .h-value { font-size: 0.92rem; font-weight: 700; color: #78350f; font-family: monospace; }
+    .h-value.name { font-family: 'Meiryo', sans-serif; }
+    .history-meta { margin-top: 6px; font-size: 0.72rem; color: #a16207; }
+
+    .hint { font-size: 0.78rem; color: #a0aec0; text-align: center; margin-top: 16px; }
+    .ledger-status { font-size: 0.72rem; color: #a0aec0; text-align: right; margin-top: 8px; }
+    .ledger-status.loaded { color: #38a169; }
+    .ledger-status.error  { color: #e53e3e; }
   </style>
 </head>
 <body>
@@ -162,12 +128,22 @@
     <div class="error-msg" id="errorMsg"></div>
 
     <div class="result" id="result">
+
+      <div class="alert-model-change" id="alertChange" style="display:none">
+        <div class="alert-icon">⚠️</div>
+        <div>
+          <div class="alert-title">この個体は機種切替品です</div>
+          <div class="alert-sub" id="alertSub"></div>
+        </div>
+      </div>
+
       <div class="sn-display" id="snDisplay"></div>
       <div class="sn-parts">
         <div class="sn-part p1" id="part1Label"></div>
         <div class="sn-part p2" id="part2Label"></div>
         <div class="sn-part p3" id="part3Label"></div>
       </div>
+
       <hr class="divider">
       <div class="result-grid">
         <div class="result-item">
@@ -188,8 +164,17 @@
           <div class="value" id="resSeq">—</div>
         </div>
       </div>
+
+      <div class="history-section" id="historySection" style="display:none">
+        <hr class="divider">
+        <div class="history-title">🔄 機種切替履歴</div>
+        <div class="history-chain" id="historyChain"></div>
+        <div class="ledger-status" id="historyStatus"></div>
+      </div>
+
     </div>
     <p class="hint">Enterキーでも解析できます</p>
+    <div class="ledger-status" id="ledgerLoadStatus"></div>
   </div>
 </div>
 
@@ -202,11 +187,77 @@ const SITES = {
   '5': { name: '将来拠点 (5)',       badge: 'badge-future'  },
 };
 
+let ledgerData = {};
+let ledgerLoaded = false;
+
+function parseCSV(text) {
+  const lines = text.replace(/\r/g, '').trim().split('\n');
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const cols = [];
+    let inQ = false, cell = '';
+    for (let j = 0; j < line.length; j++) {
+      const c = line[j];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cell.trim()); cell = ''; }
+      else { cell += c; }
+    }
+    cols.push(cell.trim());
+    rows.push(cols);
+  }
+  return rows;
+}
+
+async function loadLedger() {
+  const el = document.getElementById('ledgerLoadStatus');
+  try {
+    const res = await fetch('./ledger.csv');
+    if (!res.ok) { el.textContent = '台帳未接続'; return; }
+    const text = await res.text();
+    const rows = parseCSV(text);
+    rows.forEach(cols => {
+      if (cols.length < 4) return;
+      const newSN = cols[3].replace(/\D/g, '');
+      if (newSN.length === 7) {
+        ledgerData[newSN] = {
+          oldModel: cols[0] || '',
+          oldSN:    cols[1].replace(/\D/g, '') || '',
+          newModel: cols[2] || '',
+          operator: cols[4] || '',
+          date:     cols[5] || '',
+          note:     cols[6] || '',
+        };
+      }
+    });
+    ledgerLoaded = true;
+    const n = Object.keys(ledgerData).length;
+    el.textContent = `台帳接続済み（${n}件）`;
+    el.className = 'ledger-status loaded';
+  } catch (e) {
+    el.textContent = '台帳未接続';
+    console.warn('Ledger load error:', e);
+  }
+}
+
+function getChain(sn) {
+  const chain = [];
+  let cur = sn;
+  const visited = new Set();
+  while (ledgerData[cur] && !visited.has(cur)) {
+    visited.add(cur);
+    chain.push({ ...ledgerData[cur], thisSN: cur });
+    cur = ledgerData[cur].oldSN;
+  }
+  return chain;
+}
+
 function decode() {
   const sn = document.getElementById('snInput').value.trim();
-  const input = document.getElementById('snInput');
+  const input    = document.getElementById('snInput');
   const errorMsg = document.getElementById('errorMsg');
-  const result = document.getElementById('result');
+  const result   = document.getElementById('result');
 
   errorMsg.style.display = 'none';
   input.classList.remove('error');
@@ -219,34 +270,98 @@ function decode() {
     return;
   }
 
-  const code = parseInt(sn.substring(0, 3), 10);
+  const code     = parseInt(sn.substring(0, 3), 10);
   const siteCode = sn[3];
-  const seq = sn.substring(4);
+  const seqStr   = sn.substring(4);
+  const seq      = parseInt(seqStr, 10);
 
   let year, month;
-  const remainder = code % 12;
-  if (remainder === 0) {
-    year = 2000 + Math.floor(code / 12) - 1;
-    month = 12;
+  const rem = code % 12;
+  if (rem === 0) { year = 2000 + Math.floor(code / 12) - 1; month = 12; }
+  else           { year = 2000 + Math.floor(code / 12);     month = rem; }
+
+  const site      = SITES[siteCode] || { name: `不明（コード: ${siteCode}）`, badge: 'badge-future' };
+  const isChange  = seq >= 900;
+  const chain     = isChange ? getChain(sn) : [];
+  const hasRecord = chain.length > 0;
+
+  // アラート
+  const alertEl = document.getElementById('alertChange');
+  const alertSb = document.getElementById('alertSub');
+  if (isChange) {
+    alertEl.style.display = 'flex';
+    if (hasRecord) {
+      alertSb.textContent = `切替前の機種: ${chain[0].oldModel}（元S/N: ${chain[0].oldSN}）`;
+    } else if (ledgerLoaded) {
+      alertSb.textContent = '台帳に切替記録が見つかりません';
+    } else {
+      alertSb.textContent = '台帳接続中...';
+    }
   } else {
-    year = 2000 + Math.floor(code / 12);
-    month = remainder;
+    alertEl.style.display = 'none';
   }
 
-  const site = SITES[siteCode] || { name: `不明（コード: ${siteCode}）`, badge: 'badge-future' };
-
-  // Display
+  // SN表示
   document.getElementById('snDisplay').textContent = sn;
   document.getElementById('part1Label').textContent = `${sn.substring(0,3)} 換算年月`;
   document.getElementById('part2Label').textContent = `${sn[3]} 拠点`;
-  document.getElementById('part3Label').textContent = `${sn.substring(4)} 連番`;
+  const p3 = document.getElementById('part3Label');
+  p3.textContent = `${seqStr} 連番${isChange ? '（切替）' : ''}`;
+  p3.className   = 'sn-part p3' + (isChange ? ' change' : '');
 
+  // 基本情報
   document.getElementById('resYear').textContent  = `${year}年`;
   document.getElementById('resMonth').textContent = `${month}月`;
   document.getElementById('resSite').textContent  = site.name;
-  document.getElementById('resBadge').innerHTML   =
-    `<span class="badge ${site.badge}">${siteCode}番拠点</span>`;
-  document.getElementById('resSeq').textContent   = `${parseInt(seq, 10)} 台目`;
+  const badgeClass = isChange ? 'badge-change' : site.badge;
+  const badgeLabel = isChange ? `機種切替品（連番${seq}）` : `${siteCode}番拠点`;
+  document.getElementById('resBadge').innerHTML = `<span class="badge ${badgeClass}">${badgeLabel}</span>`;
+  document.getElementById('resSeq').textContent = isChange ? `${seq}（切替品）` : `${seq} 台目`;
+
+  // 切替履歴
+  const histSec = document.getElementById('historySection');
+  const histEl  = document.getElementById('historyChain');
+  const histSt  = document.getElementById('historyStatus');
+
+  if (isChange) {
+    histSec.style.display = 'block';
+    histSt.textContent = '';
+    if (hasRecord) {
+      const parts = [];
+      chain.forEach((entry, i) => {
+        if (i > 0) parts.push('<div class="history-arrow">↑ さらに前の切替</div>');
+        parts.push(`
+          <div class="history-entry">
+            <div class="history-row">
+              <div class="history-col">
+                <div class="h-label">切替後（新機種）</div>
+                <div class="h-value name">${entry.newModel || '—'}</div>
+                <div class="h-value">${entry.thisSN}</div>
+              </div>
+              <div class="history-col">
+                <div class="h-label">切替前（旧機種）</div>
+                <div class="h-value name">${entry.oldModel || '—'}</div>
+                <div class="h-value">${entry.oldSN || '—'}</div>
+              </div>
+            </div>
+            <div class="history-meta">
+              切替日: ${entry.date || '—'}　担当: ${entry.operator || '—'}${entry.note ? `　備考: ${entry.note}` : ''}
+            </div>
+          </div>`);
+      });
+      histEl.innerHTML = parts.join('');
+    } else if (ledgerLoaded) {
+      histEl.innerHTML = '';
+      histSt.textContent = '台帳に切替記録が見つかりませんでした';
+      histSt.className = 'ledger-status error';
+    } else {
+      histEl.innerHTML = '';
+      histSt.textContent = '台帳読み込み中...';
+      histSt.className = 'ledger-status';
+    }
+  } else {
+    histSec.style.display = 'none';
+  }
 
   result.style.display = 'block';
 }
@@ -254,6 +369,8 @@ function decode() {
 document.getElementById('snInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') decode();
 });
+
+loadLedger();
 </script>
 </body>
 </html>
