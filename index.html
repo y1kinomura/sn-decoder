@@ -235,6 +235,9 @@ async function loadLedger() {
     const n = Object.keys(ledgerData).length;
     el.textContent = `台帳接続済み（${n}件）`;
     el.className = 'ledger-status loaded';
+    // ロード完了時に「台帳接続中...」のまま表示中なら再デコード
+    const alertSb = document.getElementById('alertSub');
+    if (alertSb && alertSb.textContent === '台帳接続中...') decode();
   } catch (e) {
     el.textContent = '台帳未接続';
     console.warn('Ledger load error:', e);
