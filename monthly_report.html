@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>クレーム月次報告資料</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Meiryo UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+    }
+
+    /* ===== ヘッダー ===== */
+    header {
+      background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+      color: #fff;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    header h1 { font-size: 1.3rem; font-weight: 700; }
+    header small { font-size: .72rem; opacity: .75; display: block; margin-top: 2px; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      padding: 7px 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.14);
+      color: #fff;
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 600;
+      transition: background .2s;
+    }
+    .btn:hover { background: rgba(255,255,255,.28); }
+    .btn-primary {
+      background: #fff;
+      color: #1a237e;
+      border-color: #fff;
+    }
+    .btn-primary:hover { background: #e8eaf6; }
+
+    /* ===== セットアップパネル ===== */
+    #setup-panel {
+      max-width: 500px;
+      margin: 60px auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 36px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.1);
+      text-align: center;
+    }
+    #setup-panel h2 { font-size: 1.2rem; margin-bottom: 10px; color: #1a237e; }
+    #setup-panel p { font-size: .86rem; color: #666; margin-bottom: 20px; line-height: 1.6; }
+    #api-key-input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid #c5cae9; border-radius: 8px;
+      font-size: .9rem; margin-bottom: 12px;
+      outline: none; transition: border .2s;
+    }
+    #api-key-input:focus { border-color: #3949ab; }
+    #setup-btn {
+      width: 100%; padding: 11px;
+      background: #3949ab; color: #fff; border: none;
+      border-radius: 8px; font-size: .95rem;
+      cursor: pointer; font-weight: 600;
+    }
+    #setup-btn:hover { background: #1a237e; }
+
+    /* ===== コントロールバー ===== */
+    #ctrl-bar {
+      display: none;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 12px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    #ctrl-bar label { font-size: .82rem; color: #555; font-weight: 600; }
+    #month-input {
+      padding: 7px 12px;
+      border: 1.5px solid #c5cae9;
+      border-radius: 6px;
+      font-size: .9rem;
+      outline: none;
+    }
+    #month-input:focus { border-color: #3949ab; }
+    #fetch-btn {
+      padding: 8px 20px;
+      background: #3949ab; color: #fff; border: none;
+      border-radius: 6px; font-size: .85rem;
+      cursor: pointer; font-weight: 700;
+    }
+    #fetch-btn:hover { background: #1a237e; }
+    #fetch-btn:disabled { background: #9fa8da; cursor: not-allowed; }
+    #ctrl-status { font-size: .78rem; color: #888; }
+
+    /* ===== ローディング ===== */
+    #loading {
+      text-align: center;
+      padding: 80px 20px;
+      color: #666;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #3949ab;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #load-status { font-size: .82rem; color: #888; margin-top: 6px; }
+
+    /* ===== レポートエリア ===== */
+    #report {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 24px 60px;
+    }
+
+    /* ===== レポートタイトル ===== */
+    .report-title-bar {
+      background: linear-gradient(135deg, #1a237e, #3949ab);
+      color: #fff;
+      border-radius: 10px;
+      padding: 22px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .report-title-bar h2 { font-size: 1.5rem; font-weight: 700; }
+    .report-title-bar .report-meta { font-size: .78rem; opacity: .8; text-align: right; line-height: 1.8; }
+
+    /* ===== セクション ===== */
+    .section {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.07);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .section-header {
+      background: #3949ab;
+      color: #fff;
+      padding: 11px 20px;
+      font-size: .9rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-body { padding: 20px; }
+
+    /* ===== サマリーカード ===== */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+    }
+    .metric-card {
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      border: 2px solid transparent;
+    }
+    .metric-card .mc-label { font-size: .68rem; color: #888; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 6px; }
+    .metric-card .mc-value { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .metric-card .mc-sub { font-size: .72rem; color: #aaa; margin-top: 4px; }
+    .mc-blue  { background: #e8eaf6; border-color: #9fa8da; }
+    .mc-blue  .mc-value { color: #1a237e; }
+    .mc-green { background: #e8f5e9; border-color: #a5d6a7; }
+    .mc-green .mc-value { color: #2e7d32; }
+    .mc-orange{ background: #fff3e0; border-color: #ffcc80; }
+    .mc-orange .mc-value { color: #e65100; }
+    .mc-purple{ background: #f3e5f5; border-color: #ce93d8; }
+    .mc-purple .mc-value { color: #6a1b9a; }
+    .mc-red   { background: #ffebee; border-color: #ef9a9a; }
+    .mc-red   .mc-value { color: #c62828; }
+    .mc-teal  { background: #e0f7fa; border-color: #80cbc4; }
+    .mc-teal  .mc-value { color: #00695c; }
+
+    /* ===== 比較矢印 ===== */
+    .delta-up   { color: #c62828; font-size: .78rem; font-weight: 700; }
+    .delta-down { color: #2e7d32; font-size: .78rem; font-weight: 700; }
+    .delta-same { color: #888;    font-size: .78rem; }
+
+    /* ===== チャートラッパー ===== */
+    .chart-wrap { position: relative; }
+    .chart-wrap canvas { max-width: 100%; }
+
+    /* ===== テーブル共通 ===== */
+    .data-table {
+      width: 100%; border-collapse: collapse;
+      font-size: .82rem;
+    }
+    .data-table th {
+      background: #3949ab; color: #fff;
+      padding: 8px 10px; text-align: left;
+      font-weight: 600; font-size: .78rem;
+      white-space: nowrap;
+    }
+    .data-table th.num, .data-table td.num { text-align: right; }
+    .data-table td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .data-table tr:hover td { background: #f5f7ff; }
+    .data-table tr.subtotal td { background: #e8eaf6; font-weight: 700; border-top: 2px solid #9fa8da; }
+    .data-table .issue-key { color: #1a237e; font-weight: 700; white-space: nowrap; }
+    .data-table a.issue-link { color: #1a237e; text-decoration: none; }
+    .data-table a.issue-link:hover { text-decoration: underline; }
+
+    /* ===== バッジ ===== */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px; border-radius: 10px;
+      font-size: .72rem; font-weight: 700;
+    }
+    .badge-blue   { background: #e8eaf6; color: #3949ab; }
+    .badge-green  { background: #e8f5e9; color: #2e7d32; }
+    .badge-orange { background: #fff3e0; color: #e65100; }
+    .badge-red    { background: #ffebee; color: #c62828; }
+    .badge-gray   { background: #f5f5f5; color: #757575; }
+
+    /* ===== プログレスバー ===== */
+    .prog-wrap { display: flex; align-items: center; gap: 8px; }
+    .prog-bg { flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+    .prog-fill { height: 100%; background: #3949ab; border-radius: 4px; }
+    .prog-pct { font-size: .72rem; color: #666; white-space: nowrap; min-width: 36px; text-align: right; }
+
+    /* ===== 2段レイアウト ===== */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ===== ヒートマップセル ===== */
+    .heat-cell { text-align: center; padding: 6px 4px; cursor: default; }
+    .heat-cell:hover { opacity: .85; }
+
+    /* ===== エラー ===== */
+    #error-msg {
+      background: #ffebee; color: #c62828;
+      border: 1px solid #ef9a9a; border-radius: 8px;
+      padding: 14px 18px; margin: 16px 24px;
+      font-size: .86rem;
+    }
+
+    /* ===== 印刷スタイル ===== */
+    @media print {
+      body { background: #fff; }
+      header, #ctrl-bar, .no-print { display: none !important; }
+      #report { padding: 0; max-width: 100%; }
+      .section { box-shadow: none; break-inside: avoid; margin-bottom: 12px; }
+      .report-title-bar { background: #1a237e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .section-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .data-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .metric-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page-break { page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== ヘッダー ===== -->
+<header>
+  <div>
+    <h1>クレーム月次報告資料</h1>
+    <small>Backlog CLAIM プロジェクト</small>
+  </div>
+  <div class="header-actions">
+    <button class="btn no-print" onclick="window.print()">印刷 / PDF保存</button>
+    <button class="btn no-print" id="change-key-btn" style="display:none" onclick="changeApiKey()">APIキー変更</button>
+  </div>
+</header>
+
+<!-- ===== セットアップパネル ===== -->
+<div id="setup-panel">
+  <h2>BacklogのAPIキーを入力してください</h2>
+  <p>Backlogの個人設定からAPIキーを取得して入力してください。<br>APIキーはブラウザのローカルストレージにのみ保存されます。</p>
+  <input type="password" id="api-key-input" placeholder="APIキーを入力...">
+  <button id="setup-btn" onclick="saveApiKey()">保存して続ける</button>
+</div>
+
+<!-- ===== コントロールバー ===== -->
+<div id="ctrl-bar" style="display:none">
+  <label for="month-input">対象月：</label>
+  <input type="month" id="month-input">
+  <button id="fetch-btn" onclick="fetchAndRender()">データ取得・レポート生成</button>
+  <span id="ctrl-status"></span>
+</div>
+
+<!-- ===== エラー ===== -->
+<div id="error-msg"></div>
+
+<!-- ===== ローディング ===== -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div>データ取得中...</div>
+  <div id="load-status"></div>
+</div>
+
+<!-- ===== レポート ===== -->
+<div id="report">
+
+  <!-- タイトルバー -->
+  <div class="report-title-bar">
+    <div>
+      <h2 id="report-title">クレーム月次報告</h2>
+      <div style="font-size:.82rem;opacity:.85;margin-top:4px" id="report-subtitle"></div>
+    </div>
+    <div class="report-meta" id="report-meta"></div>
+  </div>
+
+  <!-- 1. 今月のサマリー -->
+  <div class="section">
+    <div class="section-header">1. 今月のサマリー</div>
+    <div class="section-body">
+      <div class="summary-grid" id="summary-grid"></div>
+    </div>
+  </div>
+
+  <!-- 2. 月次推移（2024年〜） -->
+  <div class="section page-break">
+    <div class="section-header">2. 月次推移（2024年〜）</div>
+    <div class="section-body">
+      <div class="chart-wrap" style="height:300px">
+        <canvas id="trend-chart"></canvas>
+      </div>
+      <div style="margin-top:16px; overflow-x:auto" id="trend-table"></div>
+    </div>
+  </div>
+
+  <!-- 3. 今月の新規案件 -->
+  <div class="section page-break">
+    <div class="section-header">3. 今月の新規案件</div>
+    <div class="section-body">
+      <div id="new-issues-summary" style="margin-bottom:14px"></div>
+      <div style="overflow-x:auto">
+        <table class="data-table" id="new-issues-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>案件番号</th>
+              <th>件名</th>
+              <th>カテゴリ</th>
+              <th>機種</th>
+              <th>発生国</th>
+              <th>ステータス</th>
+              <th>担当者</th>
+            </tr>
+          </thead>
+          <tbody id="new-issues-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. カテゴリ別集計 -->
+  <div class="section page-break">
+    <div class="section-header">4. カテゴリ別発生状況（累計）</div>
+    <div class="section-body">
+      <div class="two-col">
+        <div>
+          <div class="chart-wrap" style="height:280px">
+            <canvas id="cat-chart"></canvas>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="cat-table">
+            <thead>
+              <tr>
+                <th>カテゴリ</th>
+                <th class="num">累計</th>
+                <th class="num">今月</th>
+                <th class="num">前月</th>
+                <th>進捗</th>
+              </tr>
+            </thead>
+            <tbody id="cat-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 発生国別集計 -->
+  <div class="section page-break">
+    <div class="section-header">5. 発生国別集計（累計）</div>
+    <div class="section-body">
+      <div class="two-col">
+        <div>
+          <div class="chart-wrap" style="height:280px">
+            <canvas id="country-chart"></canvas>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="country-table">
+            <thead>
+              <tr>
+                <th>発生国</th>
+                <th class="num">累計</th>
+                <th class="num">今月</th>
+                <th class="num">前月</th>
+                <th class="num">割合</th>
+              </tr>
+            </thead>
+            <tbody id="country-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 原因分類別集計 -->
+  <div class="section page-break">
+    <div class="section-header">6. 原因分類別集計（累計）</div>
+    <div class="section-body">
+      <div class="two-col">
+        <div>
+          <div class="chart-wrap" style="height:280px">
+            <canvas id="cause-chart"></canvas>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="cause-table">
+            <thead>
+              <tr>
+                <th>原因分類</th>
+                <th class="num">累計</th>
+                <th class="num">今月</th>
+                <th class="num">前月</th>
+                <th class="num">割合</th>
+              </tr>
+            </thead>
+            <tbody id="cause-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 製造拠点別集計 -->
+  <div class="section page-break">
+    <div class="section-header">7. 製造拠点別集計（累計）</div>
+    <div class="section-body">
+      <div class="two-col">
+        <div>
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="factory-chart"></canvas>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="factory-table">
+            <thead>
+              <tr>
+                <th>製造拠点</th>
+                <th class="num">累計</th>
+                <th class="num">今月</th>
+                <th class="num">前月</th>
+                <th class="num">割合</th>
+              </tr>
+            </thead>
+            <tbody id="factory-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. 月別×カテゴリ ヒートマップ（2024年〜今月） -->
+  <div class="section page-break">
+    <div class="section-header">8. 月別×カテゴリ ヒートマップ（2024年〜）</div>
+    <div class="section-body" style="overflow-x:auto">
+      <div id="heatmap-wrap"></div>
+    </div>
+  </div>
+
+  <!-- 9. 未完了案件一覧 -->
+  <div class="section page-break">
+    <div class="section-header">9. 対応中案件一覧（今月末時点の未完了）</div>
+    <div class="section-body">
+      <div id="open-summary" style="margin-bottom:14px"></div>
+      <div style="overflow-x:auto">
+        <table class="data-table" id="open-table">
+          <thead>
+            <tr>
+              <th>案件番号</th>
+              <th>件名</th>
+              <th>カテゴリ</th>
+              <th>機種</th>
+              <th>ステータス</th>
+              <th>担当者</th>
+              <th>登録日</th>
+              <th>経過日数</th>
+            </tr>
+          </thead>
+          <tbody id="open-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /report -->
+
+<script>
+// ===== 定数 =====
+const BASE_URL = 'https://hashima.backlog.com/api/v2';
+const PROJECT_KEY = 'CLAIM';
+const CLAIM_TYPES = ['クレーム案件'];
+const FINAL_DONE = new Set(['完了', '処理済み']);
+
+// ===== ユーティリティ =====
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function setText(id, v) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = v;
+}
+function show(id)  { const el = document.getElementById(id); if (el) el.style.display = ''; }
+function hide(id)  { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+function pct(n, d) { return d > 0 ? (n / d * 100).toFixed(1) + '%' : '0%'; }
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ===== APIキー管理 =====
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) { alert('APIキーを入力してください'); return; }
+  localStorage.setItem('backlog_api_key', key);
+  initApp();
+}
+function changeApiKey() {
+  localStorage.removeItem('backlog_api_key');
+  location.reload();
+}
+function getApiKey() { return localStorage.getItem('backlog_api_key'); }
+
+// ===== 初期化 =====
+function initApp() {
+  const key = getApiKey();
+  if (!key) {
+    show('setup-panel');
+    return;
+  }
+  hide('setup-panel');
+  show('ctrl-bar');
+  document.getElementById('change-key-btn').style.display = '';
+
+  // デフォルト: 先月を設定
+  const now = new Date();
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  document.getElementById('month-input').value =
+    `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// ===== Backlog API フェッチ =====
+async function apiFetch(path, params = {}) {
+  const apiKey = getApiKey();
+  const url = new URL(BASE_URL + path);
+  url.searchParams.set('apiKey', apiKey);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`API Error ${res.status}: ${path}`);
+  return res.json();
+}
+
+async function fetchAllIssues(onProgress) {
+  const allIssues = [];
+  const pageSize = 100;
+  let offset = 0;
+  while (true) {
+    onProgress && onProgress(`取得中... ${allIssues.length}件`);
+    const batch = await apiFetch('/issues', {
+      projectId: PROJECT_KEY,
+      count: pageSize,
+      offset,
+      order: 'asc',
+    });
+    allIssues.push(...batch);
+    if (batch.length < pageSize) break;
+    offset += pageSize;
+  }
+  return allIssues;
+}
+
+// ===== データ取得 & レポート生成 =====
+async function fetchAndRender() {
+  const monthVal = document.getElementById('month-input').value;
+  if (!monthVal) { alert('対象月を選択してください'); return; }
+
+  const [yr, mo] = monthVal.split('-').map(Number);
+
+  hide('report');
+  hide('error-msg');
+  show('loading');
+  document.getElementById('fetch-btn').disabled = true;
+
+  try {
+    const allIssues = await fetchAllIssues(msg => {
+      document.getElementById('load-status').textContent = msg;
+    });
+
+    const claims = allIssues.filter(i => CLAIM_TYPES.includes(i.issueType?.name));
+
+    hide('loading');
+    renderReport(claims, yr, mo);
+    show('report');
+  } catch (e) {
+    hide('loading');
+    const errEl = document.getElementById('error-msg');
+    errEl.textContent = 'データ取得に失敗しました: ' + e.message;
+    errEl.style.display = '';
+  } finally {
+    document.getElementById('fetch-btn').disabled = false;
+  }
+}
+
+// ===== レポート全体描画 =====
+function renderReport(claims, yr, mo) {
+  const targetStart = new Date(yr, mo - 1, 1);
+  const targetEnd   = new Date(yr, mo, 1);    // 翌月1日（未満判定に使う）
+  const prevStart   = new Date(yr, mo - 2, 1);
+  const prevEnd     = targetStart;
+
+  // 対象月の新規案件
+  const thisMonthNew = claims.filter(i => {
+    const d = new Date(i.created);
+    return d >= targetStart && d < targetEnd;
+  });
+
+  // 前月の新規案件
+  const prevMonthNew = claims.filter(i => {
+    const d = new Date(i.created);
+    return d >= prevStart && d < prevEnd;
+  });
+
+  // 対象月末時点の未完了案件（対象月末までに登録 & 完了日が対象月末より後 or 未完了）
+  const openAtEndOfMonth = claims.filter(i => {
+    const created = new Date(i.created);
+    if (created >= targetEnd) return false; // まだ登録されていない
+    return !FINAL_DONE.has(i.status?.name);
+  });
+
+  const yymm = `${yr}年${mo}月`;
+  document.getElementById('report-title').textContent = `クレーム月次報告 ${yymm}`;
+  document.getElementById('report-subtitle').textContent =
+    `対象：クレーム案件（CLAIM プロジェクト）`;
+  document.getElementById('report-meta').innerHTML =
+    `作成日：${new Date().toLocaleDateString('ja-JP')}<br>` +
+    `累計件数：${claims.length}件<br>` +
+    `今月新規：${thisMonthNew.length}件`;
+
+  renderSummary(claims, thisMonthNew, prevMonthNew, openAtEndOfMonth, yr, mo);
+  renderTrend(claims, yr, mo);
+  renderNewIssues(thisMonthNew, yr, mo);
+  renderCategorySection(claims, thisMonthNew, prevMonthNew, yr, mo);
+  renderCountrySection(claims, thisMonthNew, prevMonthNew, yr, mo);
+  renderCauseSection(claims, thisMonthNew, prevMonthNew, yr, mo);
+  renderFactorySection(claims, thisMonthNew, prevMonthNew, yr, mo);
+  renderHeatmap(claims, yr, mo);
+  renderOpenIssues(openAtEndOfMonth, targetEnd);
+}
+
+// ===== 1. サマリー =====
+function renderSummary(claims, thisMonth, prevMonth, openIssues, yr, mo) {
+  const total = claims.length;
+  const doneAll = claims.filter(i => FINAL_DONE.has(i.status?.name)).length;
+  const rateAll = total > 0 ? Math.round(doneAll / total * 100) : 0;
+  const newCnt  = thisMonth.length;
+  const prevCnt = prevMonth.length;
+  const delta   = newCnt - prevCnt;
+  const deltaHtml = delta === 0
+    ? `<span class="delta-same">→ 前月比 ±0</span>`
+    : delta > 0
+      ? `<span class="delta-up">▲ 前月比 +${delta}</span>`
+      : `<span class="delta-down">▼ 前月比 ${delta}</span>`;
+
+  // 今月新規の完了状況
+  const thisMonthDone = thisMonth.filter(i => FINAL_DONE.has(i.status?.name)).length;
+
+  const cards = [
+    { label: '今月 新規件数', value: newCnt, sub: deltaHtml, cls: 'mc-blue' },
+    { label: '前月 新規件数', value: prevCnt, sub: `${yr}年${mo-1 > 0 ? mo-1 : 12}月`, cls: 'mc-gray' },
+    { label: '累計件数',      value: total,   sub: '2018年〜',  cls: 'mc-blue' },
+    { label: '累計完了',      value: doneAll, sub: `完了率 ${rateAll}%`, cls: 'mc-green' },
+    { label: '今月末 対応中', value: openIssues.length, sub: '未完了案件', cls: 'mc-orange' },
+    { label: '今月新規 解決済', value: thisMonthDone, sub: `今月新規の ${pct(thisMonthDone, newCnt)}`, cls: 'mc-teal' },
+  ];
+
+  document.getElementById('summary-grid').innerHTML = cards.map(c => `
+    <div class="metric-card ${c.cls}">
+      <div class="mc-label">${c.label}</div>
+      <div class="mc-value">${c.value}</div>
+      <div class="mc-sub">${c.sub}</div>
+    </div>`).join('');
+}
+
+// ===== 2. 月次推移チャート + テーブル =====
+function renderTrend(claims, targetYr, targetMo) {
+  const startYear = 2024;
+  const years = [];
+  for (let y = startYear; y <= targetYr; y++) years.push(y);
+
+  const ym = {};
+  claims.forEach(i => {
+    if (!i.created) return;
+    const d = new Date(i.created);
+    const y = d.getFullYear();
+    if (y < startYear) return;
+    const m = d.getMonth() + 1;
+    if (!ym[y]) ym[y] = {};
+    ym[y][m] = (ym[y][m] || 0) + 1;
+  });
+
+  const months = [1,2,3,4,5,6,7,8,9,10,11,12];
+  const labels = months.map(m => `${m}月`);
+
+  const barColors = ['#4472c4','#ed7d31','#538135','#7030a0'];
+  const lineColors = ['#9dc3e6','#f4b183','#a9d18e','#c5a0d0'];
+
+  const datasets = [];
+  years.forEach((y, i) => {
+    datasets.push({
+      type: 'bar',
+      label: `${y}年`,
+      data: months.map(m => ym[y]?.[m] || 0),
+      backgroundColor: barColors[i] || `hsl(${i*80},60%,55%)`,
+      yAxisID: 'yLeft',
+      order: 2,
+      borderRadius: 3,
+    });
+  });
+  years.forEach((y, i) => {
+    let cum = 0;
+    const lastMo = y < targetYr ? 12 : targetMo;
+    datasets.push({
+      type: 'line',
+      label: `${y}年累計`,
+      data: months.map(m => {
+        cum += ym[y]?.[m] || 0;
+        return m <= lastMo ? cum : null;
+      }),
+      borderColor: lineColors[i] || `hsl(${i*80},40%,45%)`,
+      backgroundColor: lineColors[i],
+      yAxisID: 'yRight',
+      order: 1,
+      tension: 0.3,
+      pointRadius: 3,
+      borderWidth: 2,
+      fill: false,
+    });
+  });
+
+  const ctx = document.getElementById('trend-chart').getContext('2d');
+  if (window._trendChart) window._trendChart.destroy();
+  window._trendChart = new Chart(ctx, {
+    data: { labels, datasets },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10, boxWidth: 12 } },
+        tooltip: { mode: 'index', intersect: false },
+        datalabels: {
+          display: ctx => ctx.dataset.type !== 'line' && ctx.parsed.y > 0,
+          anchor: 'end', align: 'top', offset: 1,
+          font: { size: 9, weight: '600' }, color: '#444',
+          formatter: v => v,
+        }
+      },
+      scales: {
+        yLeft: {
+          type: 'linear', position: 'left', beginAtZero: true,
+          title: { display: true, text: '月次件数', font: { size: 10 } },
+          grid: { color: '#f0f0f0' },
+        },
+        yRight: {
+          type: 'linear', position: 'right', beginAtZero: true,
+          title: { display: true, text: '累計件数', font: { size: 10 } },
+          grid: { drawOnChartArea: false },
+        },
+        x: { grid: { color: '#f8f8f8' } },
+      },
+      responsive: true, maintainAspectRatio: true,
+    }
+  });
+
+  // テーブル
+  const th = `<th style="text-align:left;padding:5px 8px;min-width:52px">年</th>` +
+    months.map(m => `<th style="text-align:center;padding:5px 4px;min-width:34px">${m}月</th>`).join('') +
+    `<th style="text-align:center;padding:5px 4px">年計</th>`;
+
+  const rows = years.map((y, yi) => {
+    const color = barColors[yi] || '#4472c4';
+    const yearTotal = months.reduce((s,m) => s + (ym[y]?.[m]||0), 0);
+    const lastMo = y < targetYr ? 12 : targetMo;
+    const cells = months.map(m => {
+      const v = ym[y]?.[m] || 0;
+      const isTarget = y === targetYr && m === targetMo;
+      const future = m > lastMo;
+      const bg = future ? '' : (v > 0 ? `background:${hexToRgba(color, Math.min(0.12 + v * 0.05, 0.65))};` : '');
+      const border = isTarget ? 'border:2px solid #f57f17;' : '';
+      return `<td style="text-align:center;padding:5px 4px;font-size:.8rem;${bg}${border}">${future ? '—' : (v || '—')}</td>`;
+    }).join('');
+    return `<tr>
+      <td style="text-align:left;padding:5px 8px;font-weight:700;color:${color}">${y}年</td>
+      ${cells}
+      <td style="text-align:center;font-weight:700;color:#1a237e;background:#e8eaf6">${yearTotal}</td>
+    </tr>`;
+  }).join('');
+
+  // 合計行
+  const colTotals = months.map(m => years.reduce((s,y) => s + (ym[y]?.[m]||0), 0));
+  const grandTotal = colTotals.reduce((s,v) => s+v, 0);
+  const totalRow = `<tr style="background:#f5f5f5;font-weight:700">
+    <td style="padding:5px 8px">合計</td>
+    ${colTotals.map(v => `<td style="text-align:center;padding:5px 4px">${v||'—'}</td>`).join('')}
+    <td style="text-align:center;background:#c5cae9;color:#1a237e">${grandTotal}</td>
+  </tr>`;
+
+  document.getElementById('trend-table').innerHTML = `
+    <table style="border-collapse:collapse;width:100%;font-size:.8rem">
+      <thead style="background:#3949ab;color:#fff">${th}</thead>
+      <tbody>${rows}${totalRow}</tbody>
+    </table>`;
+}
+
+// ===== 3. 今月の新規案件 =====
+function renderNewIssues(issues, yr, mo) {
+  const sorted = [...issues].sort((a,b) =>
+    parseInt((a.issueKey||'').replace(/\D+/g,'')) - parseInt((b.issueKey||'').replace(/\D+/g,''))
+  );
+
+  document.getElementById('new-issues-summary').innerHTML =
+    `<span style="font-size:.86rem;color:#555">${yr}年${mo}月に新規登録されたクレーム案件：</span>
+     <strong style="color:#1a237e;font-size:1.1rem"> ${issues.length}件</strong>`;
+
+  if (sorted.length === 0) {
+    document.getElementById('new-issues-tbody').innerHTML =
+      `<tr><td colspan="8" style="text-align:center;color:#aaa;padding:20px">今月の新規案件はありません</td></tr>`;
+    return;
+  }
+
+  document.getElementById('new-issues-tbody').innerHTML = sorted.map((i, idx) => {
+    const cats = i.category?.length > 0 ? i.category.map(c => c.name).join('、') : '未分類';
+    const model = extractModel(i.description, i.summary);
+    const country = extractCountry(i.description) || '未記載';
+    const isDone = FINAL_DONE.has(i.status?.name);
+    const statusBadge = isDone
+      ? `<span class="badge badge-green">${esc(i.status?.name)}</span>`
+      : `<span class="badge badge-orange">${esc(i.status?.name)}</span>`;
+    return `<tr>
+      <td style="text-align:center;color:#888;font-size:.75rem">${idx+1}</td>
+      <td><a class="issue-link" href="https://hashima.backlog.com/view/${esc(i.issueKey)}" target="_blank">
+        <span class="issue-key">${esc(i.issueKey)}</span></a></td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(i.summary)}">${esc(i.summary)}</td>
+      <td style="font-size:.78rem">${esc(cats)}</td>
+      <td style="white-space:nowrap;font-size:.78rem">${esc(model)}</td>
+      <td style="white-space:nowrap;font-size:.78rem">${esc(country)}</td>
+      <td>${statusBadge}</td>
+      <td style="font-size:.78rem">${esc(i.assignee?.name || '未割当')}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ===== カテゴリ集計ヘルパー =====
+function countByCategory(issues) {
+  const map = {};
+  issues.forEach(i => {
+    const cats = i.category?.length > 0 ? i.category.map(c => c.name) : ['未分類'];
+    cats.forEach(cn => { map[cn] = (map[cn] || 0) + 1; });
+  });
+  return map;
+}
+
+// ===== 4. カテゴリ別 =====
+function renderCategorySection(claims, thisMonth, prevMonth, yr, mo) {
+  const cumCount   = countByCategory(claims);
+  const thisCount  = countByCategory(thisMonth);
+  const prevCount  = countByCategory(prevMonth);
+  const sorted = Object.entries(cumCount).sort((a,b) => b[1]-a[1]);
+  const total = claims.length;
+
+  // チャート
+  const colors = sorted.map((_,i) => `hsl(${(i*37+200)%360},60%,55%)`);
+  const ctx = document.getElementById('cat-chart').getContext('2d');
+  if (window._catChart) window._catChart.destroy();
+  window._catChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(([k]) => k),
+      datasets: [{
+        data: sorted.map(([,v]) => v),
+        backgroundColor: colors, borderRadius: 4,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        datalabels: { anchor: 'end', align: 'right', font: { size: 10 }, formatter: v => v },
+        tooltip: { callbacks: { label: c => ` ${c.parsed.x}件（${pct(c.parsed.x, total)}）` } }
+      },
+      scales: { x: { beginAtZero: true }, y: { ticks: { font: { size: 11 } } } },
+      responsive: true, maintainAspectRatio: false,
+    }
+  });
+
+  // 完了件数（カテゴリ別）
+  const doneCount = {};
+  claims.forEach(i => {
+    if (!FINAL_DONE.has(i.status?.name)) return;
+    const cats = i.category?.length > 0 ? i.category.map(c => c.name) : ['未分類'];
+    cats.forEach(cn => { doneCount[cn] = (doneCount[cn] || 0) + 1; });
+  });
+
+  document.getElementById('cat-tbody').innerHTML = sorted.map(([cn, cum]) => {
+    const done = doneCount[cn] || 0;
+    const prog = cum > 0 ? Math.round(done/cum*100) : 0;
+    const tm = thisCount[cn] || 0;
+    const pm = prevCount[cn] || 0;
+    return `<tr>
+      <td><strong>${esc(cn)}</strong></td>
+      <td class="num">${cum}</td>
+      <td class="num">${tm || '—'}</td>
+      <td class="num">${pm || '—'}</td>
+      <td style="min-width:100px">
+        <div class="prog-wrap">
+          <div class="prog-bg"><div class="prog-fill" style="width:${prog}%"></div></div>
+          <span class="prog-pct">${prog}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') + `<tr class="subtotal">
+    <td>合計</td>
+    <td class="num">${total}</td>
+    <td class="num">${thisMonth.length || '—'}</td>
+    <td class="num">${prevMonth.length || '—'}</td>
+    <td></td>
+  </tr>`;
+}
+
+// ===== 5. 発生国別 =====
+function renderCountrySection(claims, thisMonth, prevMonth, yr, mo) {
+  const toCounts = issues => {
+    const m = {};
+    issues.forEach(i => {
+      const c = extractCountry(i.description) || '未記載';
+      m[c] = (m[c]||0) + 1;
+    });
+    return m;
+  };
+  const cumC  = toCounts(claims);
+  const thisC = toCounts(thisMonth);
+  const prevC = toCounts(prevMonth);
+  const sorted = Object.entries(cumC).sort((a,b) => b[1]-a[1]);
+  const total  = claims.length;
+
+  const colors = ['#4472c4','#ed7d31','#a9d18e','#ff7043','#9c27b0','#00bcd4','#607d8b','#795548'];
+  const ctx = document.getElementById('country-chart').getContext('2d');
+  if (window._countryChart) window._countryChart.destroy();
+  window._countryChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: sorted.map(([k]) => k),
+      datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 11 }, padding: 8 } },
+        datalabels: {
+          display: ctx => ctx.parsed / total > 0.04,
+          formatter: (v,c) => `${c.chart.data.labels[c.dataIndex]}\n${v}件`,
+          font: { size: 10, weight: '600' }, color: '#fff',
+        },
+        tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed}件（${pct(c.parsed, total)}）` } }
+      },
+      cutout: '50%',
+      responsive: true, maintainAspectRatio: false,
+    }
+  });
+
+  document.getElementById('country-tbody').innerHTML = sorted.map(([cn, cum]) => {
+    return `<tr>
+      <td><strong>${esc(cn)}</strong></td>
+      <td class="num">${cum}</td>
+      <td class="num">${thisC[cn] || '—'}</td>
+      <td class="num">${prevC[cn] || '—'}</td>
+      <td class="num">${pct(cum, total)}</td>
+    </tr>`;
+  }).join('') + `<tr class="subtotal">
+    <td>合計</td>
+    <td class="num">${total}</td>
+    <td class="num">${thisMonth.length||'—'}</td>
+    <td class="num">${prevMonth.length||'—'}</td>
+    <td class="num">100%</td>
+  </tr>`;
+}
+
+// ===== 6. 原因分類別 =====
+function renderCauseSection(claims, thisMonth, prevMonth, yr, mo) {
+  const toCounts = issues => {
+    const m = {};
+    issues.forEach(i => {
+      const raw = extractCauseType(i.description);
+      const c = normalizeCause(raw) || '未記載';
+      m[c] = (m[c]||0) + 1;
+    });
+    return m;
+  };
+  const cumC  = toCounts(claims);
+  const thisC = toCounts(thisMonth);
+  const prevC = toCounts(prevMonth);
+  const sorted = Object.entries(cumC).sort((a,b) => b[1]-a[1]);
+  const total  = claims.length;
+
+  const causeColors = {
+    '製造起因':'#e65100','設計起因':'#1565c0','部品不良':'#b71c1c',
+    '部品起因':'#b71c1c','ユーザー起因':'#2e7d32','輸送起因':'#00838f',
+    '原因不明':'#757575','異常なし':'#43a047','未記載':'#bdbdbd','その他':'#7b1fa2',
+  };
+  const colors = sorted.map(([k]) => causeColors[k] || '#90a4ae');
+
+  const ctx = document.getElementById('cause-chart').getContext('2d');
+  if (window._causeChart) window._causeChart.destroy();
+  window._causeChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(([k]) => k),
+      datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: colors, borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        datalabels: { anchor: 'end', align: 'right', font: { size: 10 }, formatter: v => v },
+        tooltip: { callbacks: { label: c => ` ${c.parsed.x}件（${pct(c.parsed.x, total)}）` } }
+      },
+      scales: { x: { beginAtZero: true }, y: { ticks: { font: { size: 11 } } } },
+      responsive: true, maintainAspectRatio: false,
+    }
+  });
+
+  document.getElementById('cause-tbody').innerHTML = sorted.map(([cn, cum]) => {
+    return `<tr>
+      <td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${causeColors[cn]||'#aaa'};margin-right:6px;vertical-align:middle"></span><strong>${esc(cn)}</strong></td>
+      <td class="num">${cum}</td>
+      <td class="num">${thisC[cn] || '—'}</td>
+      <td class="num">${prevC[cn] || '—'}</td>
+      <td class="num">${pct(cum, total)}</td>
+    </tr>`;
+  }).join('') + `<tr class="subtotal">
+    <td>合計（記載あり）</td>
+    <td class="num">${sorted.filter(([k]) => k !== '未記載').reduce((s,[,v]) => s+v, 0)}</td>
+    <td></td><td></td><td></td>
+  </tr>`;
+}
+
+// ===== 7. 製造拠点別 =====
+function renderFactorySection(claims, thisMonth, prevMonth, yr, mo) {
+  const toCounts = issues => {
+    const m = {};
+    issues.forEach(i => {
+      const cats = i.category?.length > 0 ? i.category.map(c => c.name) : [];
+      const f = extractFactory(i.description, cats[0]) || '未記載';
+      m[f] = (m[f]||0) + 1;
+    });
+    return m;
+  };
+  const cumC  = toCounts(claims);
+  const thisC = toCounts(thisMonth);
+  const prevC = toCounts(prevMonth);
+  const sorted = Object.entries(cumC).sort((a,b) => b[1]-a[1]);
+  const total  = claims.length;
+
+  const factoryColors = {
+    '日本揖斐工場':'#1565c0','ベトナム工場':'#2e7d32',
+    '中国昆山工場':'#e65100','KM生産':'#6a1b9a','未記載':'#bdbdbd',
+  };
+  const colors = sorted.map(([k]) => factoryColors[k] || '#90a4ae');
+
+  const ctx = document.getElementById('factory-chart').getContext('2d');
+  if (window._factoryChart) window._factoryChart.destroy();
+  window._factoryChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: sorted.map(([k]) => k),
+      datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 11 }, padding: 8 } },
+        datalabels: {
+          display: ctx => ctx.parsed / total > 0.04,
+          formatter: (v,c) => `${v}件\n${pct(v, total)}`,
+          font: { size: 10, weight: '600' }, color: '#fff',
+        },
+        tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed}件（${pct(c.parsed, total)}）` } }
+      },
+      cutout: '50%',
+      responsive: true, maintainAspectRatio: false,
+    }
+  });
+
+  document.getElementById('factory-tbody').innerHTML = sorted.map(([fn, cum]) => {
+    return `<tr>
+      <td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${factoryColors[fn]||'#aaa'};margin-right:6px;vertical-align:middle"></span><strong>${esc(fn)}</strong></td>
+      <td class="num">${cum}</td>
+      <td class="num">${thisC[fn] || '—'}</td>
+      <td class="num">${prevC[fn] || '—'}</td>
+      <td class="num">${pct(cum, total)}</td>
+    </tr>`;
+  }).join('') + `<tr class="subtotal">
+    <td>合計</td>
+    <td class="num">${total}</td>
+    <td class="num">${thisMonth.length||'—'}</td>
+    <td class="num">${prevMonth.length||'—'}</td>
+    <td class="num">100%</td>
+  </tr>`;
+}
+
+// ===== 8. 月別×カテゴリ ヒートマップ =====
+function renderHeatmap(claims, targetYr, targetMo) {
+  // 2024年1月〜今月のラベルを生成
+  const months = [];
+  for (let y = 2024; y <= targetYr; y++) {
+    const maxM = y < targetYr ? 12 : targetMo;
+    for (let m = 1; m <= maxM; m++) {
+      months.push({ y, m, label: `${y}/${String(m).padStart(2,'0')}` });
+    }
+  }
+
+  // カテゴリ収集
+  const catSet = new Set();
+  claims.forEach(i => {
+    const d = new Date(i.created);
+    if (d.getFullYear() < 2024) return;
+    const cats = i.category?.length > 0 ? i.category.map(c => c.name) : ['未分類'];
+    cats.forEach(c => catSet.add(c));
+  });
+
+  // カテゴリ別累計で並び替え
+  const catTotals = {};
+  catSet.forEach(c => { catTotals[c] = 0; });
+  claims.forEach(i => {
+    const d = new Date(i.created);
+    if (d.getFullYear() < 2024) return;
+    const cats = i.category?.length > 0 ? i.category.map(c => c.name) : ['未分類'];
+    cats.forEach(c => { catTotals[c] = (catTotals[c]||0) + 1; });
+  });
+  const cats = [...catSet].sort((a,b) => (catTotals[b]||0) - (catTotals[a]||0));
+
+  // ym[yrmo_key][cat] = count
+  const grid = {};
+  claims.forEach(i => {
+    const d = new Date(i.created);
+    const y = d.getFullYear();
+    if (y < 2024) return;
+    const m = d.getMonth() + 1;
+    const key = `${y}-${m}`;
+    if (!grid[key]) grid[key] = {};
+    const cs = i.category?.length > 0 ? i.category.map(c => c.name) : ['未分類'];
+    cs.forEach(c => { grid[key][c] = (grid[key][c]||0) + 1; });
+  });
+
+  // 各カテゴリの最大値（色スケール用）
+  const catMax = {};
+  cats.forEach(c => {
+    catMax[c] = Math.max(...months.map(mo => grid[`${mo.y}-${mo.m}`]?.[c] || 0), 1);
+  });
+
+  const thStyle = 'background:#3949ab;color:#fff;padding:5px 6px;font-size:.72rem;white-space:nowrap;text-align:center;font-weight:600;';
+  const labelStyle = 'background:#e8eaf6;color:#1a237e;padding:5px 6px;font-size:.72rem;font-weight:700;white-space:nowrap;';
+
+  let html = `<table style="border-collapse:collapse;min-width:100%">
+    <thead><tr>
+      <th style="${thStyle}text-align:left;min-width:100px">カテゴリ＼年月</th>
+      ${months.map(mo => {
+        const isTarget = mo.y === targetYr && mo.m === targetMo;
+        const border = isTarget ? 'border-left:2px solid #f57f17;border-right:2px solid #f57f17;' : '';
+        return `<th style="${thStyle}${border}min-width:40px">${mo.label}</th>`;
+      }).join('')}
+      <th style="${thStyle}background:#1a237e;min-width:44px">合計</th>
+    </tr></thead>
+    <tbody>`;
+
+  cats.forEach(cat => {
+    const rowTotal = months.reduce((s,mo) => s + (grid[`${mo.y}-${mo.m}`]?.[cat]||0), 0);
+    if (rowTotal === 0) return;
+    html += `<tr>
+      <td style="${labelStyle}">${esc(cat)}</td>
+      ${months.map(mo => {
+        const v = grid[`${mo.y}-${mo.m}`]?.[cat] || 0;
+        const isTarget = mo.y === targetYr && mo.m === targetMo;
+        const intensity = catMax[cat] > 0 ? v / catMax[cat] : 0;
+        const bg = v > 0 ? hexToRgba('#3949ab', 0.08 + intensity * 0.72) : '';
+        const tc = intensity > 0.55 ? '#fff' : '#333';
+        const border = isTarget ? 'border-left:2px solid #f57f17;border-right:2px solid #f57f17;' : '';
+        return `<td style="text-align:center;padding:5px 4px;font-size:.8rem;background:${bg};color:${tc};font-weight:${v>0?'700':'400'};${border}">
+          ${v > 0 ? v : '<span style="color:#ddd">—</span>'}
+        </td>`;
+      }).join('')}
+      <td style="text-align:center;font-weight:700;color:#1a237e;background:#e8eaf6;padding:5px 4px;font-size:.8rem">${rowTotal}</td>
+    </tr>`;
+  });
+
+  // 合計行
+  const colTotals = months.map(mo => cats.reduce((s,c) => s+(grid[`${mo.y}-${mo.m}`]?.[c]||0), 0));
+  const grand = colTotals.reduce((s,v)=>s+v,0);
+  html += `<tr style="background:#f5f5f5;font-weight:700;border-top:2px solid #9fa8da">
+    <td style="padding:5px 8px;font-size:.78rem;color:#555">月次合計</td>
+    ${colTotals.map((v,i) => {
+      const mo = months[i];
+      const isTarget = mo.y === targetYr && mo.m === targetMo;
+      const bg = v > 0 ? `background:${hexToRgba('#1a237e', Math.min(0.06 + v*0.03, 0.4))};` : '';
+      const border = isTarget ? 'border-left:2px solid #f57f17;border-right:2px solid #f57f17;' : '';
+      return `<td style="text-align:center;padding:5px 4px;font-size:.8rem;${bg}${border}">${v||'—'}</td>`;
+    }).join('')}
+    <td style="text-align:center;font-weight:700;color:#1a237e;background:#c5cae9">${grand}</td>
+  </tr>`;
+
+  html += `</tbody></table>
+    <p style="font-size:.72rem;color:#aaa;margin-top:8px">※ 対象月（${targetYr}/${String(targetMo).padStart(2,'0')}）はオレンジ枠で表示</p>`;
+
+  document.getElementById('heatmap-wrap').innerHTML = html;
+}
+
+// ===== 9. 未完了案件一覧 =====
+function renderOpenIssues(issues, asOf) {
+  const sorted = [...issues].sort((a,b) =>
+    parseInt((a.issueKey||'').replace(/\D+/g,'')) - parseInt((b.issueKey||'').replace(/\D+/g,''))
+  );
+
+  document.getElementById('open-summary').innerHTML =
+    `<span style="font-size:.86rem;color:#555">対応中案件（未完了）：</span>
+     <strong style="color:#e65100;font-size:1.1rem"> ${issues.length}件</strong>`;
+
+  if (sorted.length === 0) {
+    document.getElementById('open-tbody').innerHTML =
+      `<tr><td colspan="8" style="text-align:center;color:#aaa;padding:20px">未完了案件はありません</td></tr>`;
+    return;
+  }
+
+  document.getElementById('open-tbody').innerHTML = sorted.map(i => {
+    const cats = i.category?.length > 0 ? i.category.map(c => c.name).join('、') : '未分類';
+    const model = extractModel(i.description, i.summary);
+    const created = i.created ? new Date(i.created) : null;
+    const days = created ? Math.floor((asOf - created) / (1000*60*60*24)) : '—';
+    const daysHtml = typeof days === 'number'
+      ? (days > 90 ? `<span style="color:#c62828;font-weight:700">${days}日</span>` : `${days}日`)
+      : days;
+    return `<tr>
+      <td><a class="issue-link" href="https://hashima.backlog.com/view/${esc(i.issueKey)}" target="_blank">
+        <span class="issue-key">${esc(i.issueKey)}</span></a></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(i.summary)}">${esc(i.summary)}</td>
+      <td style="font-size:.78rem">${esc(cats)}</td>
+      <td style="font-size:.78rem;white-space:nowrap">${esc(model)}</td>
+      <td><span class="badge badge-orange">${esc(i.status?.name)}</span></td>
+      <td style="font-size:.78rem">${esc(i.assignee?.name || '未割当')}</td>
+      <td style="font-size:.78rem;white-space:nowrap">${created ? created.toLocaleDateString('ja-JP') : '—'}</td>
+      <td style="text-align:right">${daysHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================================================
+// ===== 以下: claim_dashboard.html と共有する抽出関数 =====
+// ===================================================
+
+function getJimukyokuSection(description) {
+  if (!description) return null;
+  const idx = description.indexOf('ここからは事務局使用');
+  return idx >= 0 ? description.slice(idx) : null;
+}
+
+function normalizeCause(cause) {
+  if (!cause) return null;
+  let s = cause.replace(/^[\s　・※■□▶▷◆◇●○→\-\/]+/, '').trim();
+  s = s.replace(/[（(].*/g, '').trim();
+  s = s.replace(/[\s　・]+$/, '').trim();
+  const _CAUSE_PARENT = ['製造起因','設計起因','部品起因','ユーザー起因','輸送起因','原因不明','異常なし'];
+  if (/^部品不良|^部品起因/.test(s)) return '部品不良';
+  if (/異常なし|異常無し|no\s*failure|no\s*defect/i.test(s)) return '異常なし';
+  for (const p of _CAUSE_PARENT) { if (s === p || s.startsWith(p)) return p; }
+  return s || null;
+}
+
+const _CAUSE_TYPES = ['製造起因','設計起因','部品起因','ユーザー起因','輸送起因','原因不明'];
+
+function extractCauseType(description) {
+  if (!description) return null;
+  const jimu = getJimukyokuSection(description);
+  if (jimu) {
+    const secM = jimu.match(/◆原因分類[：:]?([\s\S]*?)(?=\n◆|$)/);
+    if (secM) {
+      const sec = secM[1];
+      const sonoM = sec.match(/その他[（(]([^）)　\s][^）)]*)[）)]/);
+      if (sonoM) return 'その他';
+      const found = _CAUSE_TYPES.filter(c => sec.includes(c));
+      if (found.length >= 1 && found.length <= 2) return found[0];
+    }
+    const m1 = jimu.match(/◆原因区分[：:]\s*([^\n\r◆]+)/);
+    if (m1 && m1[1].trim()) return m1[1].trim();
+    const m2 = jimu.match(/◆原因区分\s*[\r\n]+\s*([^\n\r◆\s][^\n\r◆]*)/);
+    if (m2 && m2[1].trim()) return m2[1].trim();
+  }
+  const m1 = description.match(/◆原因区分[：:]\s*([^\n\r◆]+)/);
+  if (m1 && m1[1].trim()) return m1[1].trim();
+  const m2 = description.match(/◆原因区分\s*[\r\n]+\s*([^\n\r◆\s][^\n\r◆]*)/);
+  if (m2 && m2[1].trim()) return m2[1].trim();
+  return null;
+}
+
+function extractCountry(description) {
+  if (!description) return null;
+  const jimuC = getJimukyokuSection(description);
+  if (jimuC) {
+    const m = jimuC.match(/◆発生国[：:]\s*([^\n\r◆]{1,40})/);
+    if (m && m[1].trim()) {
+      const v = cleanCountry(m[1].trim().split(/[\s　,、]+/)[0]);
+      if (v) return v;
+    }
+  }
+  const sec2Idx = description.search(/②/);
+  if (sec2Idx >= 0) {
+    const fromSec2 = description.slice(sec2Idx);
+    const nextCircled = fromSec2.slice(1).search(/[③④⑤⑥⑦⑧⑨⑩]/);
+    const sec2 = nextCircled >= 0 ? fromSec2.slice(0, nextCircled + 1) : fromSec2.slice(0, 1200);
+    const fIdx = sec2.search(/[・]?\s*発生国/);
+    if (fIdx >= 0) {
+      const fromField = sec2.slice(fIdx);
+      const fieldLine = (fromField.match(/[^\n\r]*/) || [''])[0];
+      const inlineM = fieldLine.match(/[：:]\s*([^\s　・※\n\r②③④⑤⑥⑦⑧⑨⑩][^\n\r]{0,30})/);
+      if (inlineM) { const v = cleanCountry(inlineM[1].trim().split(/[\s　,、・\/]+/)[0]); if (v) return v; }
+      const afterFieldLine = fromField.slice(fieldLine.length);
+      const nextLineM = afterFieldLine.match(/[\r\n]+[\s　]*([^\n\r・※\s②③④⑤⑥⑦⑧⑨⑩①][^\n\r]{0,30})/);
+      if (nextLineM) {
+        const raw = nextLineM[1].trim().replace(/^\*+/, '');
+        if (!/^[③④⑤⑥⑦⑧⑨⑩①②]/.test(raw)) { const v = cleanCountry(raw.split(/[\s　,、・\/]+/)[0]); if (v) return v; }
+      }
+    }
+  }
+  const mDB1 = description.match(/◆発生国[：:]\s*([^\n\r◆]{1,40})/);
+  if (mDB1) { const v = cleanCountry(mDB1[1].trim().split(/[・\/、,\s　]+/)[0]); if (v) return v; }
+  const mDB2 = description.match(/◆発生国\s*[\r\n]+\s*([^\n\r◆]{1,40})/);
+  if (mDB2) { const v = cleanCountry(mDB2[1].trim().split(/[・\/、,\s　]+/)[0]); if (v) return v; }
+  const mAny = description.match(/発生国[：:]\s*([^\n\r・※\s][^\n\r]{0,30})/);
+  if (mAny) { const v = cleanCountry(mAny[1].trim().split(/[\s　,、・\/]+/)[0]); if (v) return v; }
+  return null;
+}
+
+function cleanCountry(s) {
+  if (!s) return null;
+  s = s.replace(/^\*+/, '').replace(/^[発生国②：:\-\s　]+/, '').replace(/[\s　*]+$/, '').trim();
+  if (s.length < 2 || s.length > 12) return null;
+  const noise = ['販社','代理店','ユーザー','HSP','JUKI','担当','様','機種','顧客','③'];
+  if (noise.some(n => s.includes(n))) return null;
+  if (/^[③④⑤⑥⑦⑧⑨⑩①]/.test(s)) return null;
+  const norm = {
+    'バングラディッシュ':'バングラデシュ','バングラデッシュ':'バングラデシュ',
+    'Bangladesh':'バングラデシュ','インドネシヤ':'インドネシア',
+    'Vietnam':'ベトナム','Cambodia':'カンボジア','Thailand':'タイ',
+    'India':'インド','Philippines':'フィリピン','China':'中国','中国揖斐':'中国',
+  };
+  return norm[s] || s;
+}
+
+function extractFactory(description, catName) {
+  if (description) {
+    const jimu = getJimukyokuSection(description);
+    if (jimu) {
+      const m = jimu.match(/◆(?:製造|生産)拠点[：:]\s*([^\n\r◆]{1,60})/);
+      if (m && m[1].trim()) {
+        const raw = m[1].trim();
+        const result = _classifyFactory(raw);
+        if (result) return result;
+        if (!/^[\s　]*工場[\s　]*$/.test(raw)) return raw;
+      }
+      const m2 = jimu.match(/◆(?:製造|生産)拠点\s*[\r\n]+\s*([^\n\r◆\s][^\n\r◆]*)/);
+      if (m2 && m2[1].trim()) {
+        const raw2 = m2[1].trim();
+        const result = _classifyFactory(raw2);
+        if (result) return result;
+        if (!/^[\s　]*工場[\s　]*$/.test(raw2)) return raw2;
+      }
+    }
+    const idx4 = description.search(/④/);
+    if (idx4 >= 0) {
+      const fromSec4 = description.slice(idx4);
+      const nextCircled = fromSec4.slice(1).search(/[⑤⑥⑦⑧⑨⑩⑪⑫]/);
+      const sec4Text = nextCircled >= 0 ? fromSec4.slice(0, nextCircled + 1) : fromSec4.slice(0, 600);
+      const found = _classifyFactory(sec4Text);
+      if (found) return found;
+    }
+  }
+  if (catName && catName.includes('検針機')) return '日本揖斐工場';
+  return null;
+}
+
+function _classifyFactory(text) {
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    if (!t) continue;
+    const multiCount = [/ベトナム|Vietnam/i, /昆山|Kunshan/i, /揖斐/].filter(r => r.test(t)).length;
+    if (multiCount >= 2) continue;
+    if (/(?:^|[\s　・\/,])GKM(?:$|[\s　・\/,])|(?:^|[\s　・\/,])KM(?:$|[\s　・\/,\-])/i.test(t)) return 'KM生産';
+    if (/ベトナム|Vietnam/i.test(t)) return 'ベトナム工場';
+    if (/昆山|Kunshan/i.test(t)) return '中国昆山工場';
+    if (/中国|China/i.test(t))  return '中国昆山工場';
+    if (/揖斐/.test(t)) return '日本揖斐工場';
+    if (/日本|Japan/i.test(t)) return '日本揖斐工場';
+  }
+  return null;
+}
+
+function pickModel(text) {
+  if (!text) return null;
+  const m = text.match(/(?<![A-Za-z])([HK][A-Z]{0,4}[-\s]?\d[\w\-]*)/i);
+  if (!m) return null;
+  const val = m[1].toUpperCase().replace(/\s/g, '-');
+  if (!/\d/.test(val)) return null;
+  return val;
+}
+
+function extractModel(description, summary) {
+  if (description) {
+    const patterns = [
+      /機種名[：:]\s*([^\n\r]{1,60})/g,
+      /◆機種[名]?[：:]\s*([^\n\r◆]{1,60})/g,
+    ];
+    for (const re of patterns) {
+      let m; re.lastIndex = 0;
+      while ((m = re.exec(description)) !== null) {
+        const v = pickModel(m[1]);
+        if (v) return v;
+      }
+    }
+    const mSec3 = description.match(/③[^\n]*/);
+    if (mSec3) {
+      const area = description.slice(mSec3.index, mSec3.index + 200);
+      const v = pickModel(area);
+      if (v) return v;
+    }
+  }
+  if (summary) { const v = pickModel(summary); if (v) return v; }
+  return '不明';
+}
+
+// ===== 起動 =====
+document.addEventListener('DOMContentLoaded', () => {
+  Chart.register(ChartDataLabels);
+  initApp();
+});
+</script>
+</body>
+</html>
